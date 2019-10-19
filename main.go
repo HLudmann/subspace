@@ -19,10 +19,10 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	"github.com/gorilla/securecookie"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -45,8 +45,8 @@ var (
 	httpInsecure bool
 
 	// set based on httpAddr
-	httpIP   string
-	httpPort string
+	//httpIP   string
+	//httpPort string
 
 	// backlink
 	backlink string
@@ -64,10 +64,10 @@ var (
 	letsencrypt bool
 
 	// HTTP read limit
-	httpReadLimit int64 = 2 * (1024 * 1024)
+	//httpReadLimit int64 = 2 * (1024 * 1024)
 
-	// securetoken
-	securetoken *securecookie.SecureCookie
+	// secureToken
+	secureToken *securecookie.SecureCookie
 
 	// logger
 	logger = log.New()
@@ -83,6 +83,9 @@ var (
 
 	// Error page HTML
 	errorPageHTML = `<html><head><title>Error</title></head><body text="orangered" bgcolor="black"><h1>An error has occurred</h1></body></html>`
+
+	// Port WireGuard server listens on
+	wgPort = 51820
 )
 
 func init() {
@@ -95,17 +98,18 @@ func init() {
 	cli.BoolVar(&showVersion, "version", false, "display version and exit")
 	cli.BoolVar(&showHelp, "help", false, "display help and exit")
 	cli.BoolVar(&debug, "debug", false, "debug mode")
+	cli.IntVar(&wgPort, "wg-port", 51820, "the port wireguard listens on")
 }
 
 func main() {
 	var err error
 
-	cli.Parse(os.Args[1:])
+	_ = cli.Parse(os.Args[1:])
 	usage := func(msg string) {
 		if msg != "" {
-			fmt.Fprintf(os.Stderr, "ERROR: %s\n", msg)
+			_, _ = fmt.Fprintf(os.Stderr, "ERROR: %s\n", msg)
 		}
-		fmt.Fprintf(os.Stderr, "Usage: %s --http-host subspace.example.com\n\n", os.Args[0])
+		_, _ = fmt.Fprintf(os.Stderr, "Usage: %s --http-host subspace.example.com\n\n", os.Args[0])
 		cli.PrintDefaults()
 	}
 
@@ -148,7 +152,7 @@ func main() {
 	}
 
 	// Secure token
-	securetoken = securecookie.New([]byte(config.FindInfo().HashKey), []byte(config.FindInfo().BlockKey))
+	secureToken = securecookie.New([]byte(config.FindInfo().HashKey), []byte(config.FindInfo().BlockKey))
 
 	// Configure SAML if metadata is present.
 	if len(config.FindInfo().SAML.IDPMetadata) > 0 {
@@ -212,13 +216,13 @@ func main() {
 			ReadTimeout:    httpTimeout,
 			MaxHeaderBytes: maxHeaderBytes,
 		}
-		hostport := net.JoinHostPort(httpHost, httpPort)
+		hostPort := net.JoinHostPort(httpHost, httpPort)
 		if httpPort == "80" {
-			hostport = httpHost
+			hostPort = httpHost
 		}
 		logger.Infof("Subspace version: %s %s", version, &url.URL{
 			Scheme: "http",
-			Host:   hostport,
+			Host:   hostPort,
 			Path:   httpPrefix,
 		})
 		logger.Fatal(httpd.ListenAndServe())
@@ -227,7 +231,7 @@ func main() {
 	// Let's Encrypt TLS mode
 
 	// autocert
-	certmanager := autocert.Manager{
+	certManager := autocert.Manager{
 		Prompt: autocert.AcceptTOS,
 		Cache:  autocert.DirCache(filepath.Join(datadir, "letsencrypt")),
 		HostPolicy: func(_ context.Context, host string) error {
@@ -252,7 +256,7 @@ func main() {
 		})
 
 		httpd := &http.Server{
-			Handler:        certmanager.HTTPHandler(redir),
+			Handler:        certManager.HTTPHandler(redir),
 			Addr:           net.JoinHostPort(httpIP, "80"),
 			WriteTimeout:   httpTimeout,
 			ReadTimeout:    httpTimeout,
@@ -265,7 +269,7 @@ func main() {
 
 	// TLS
 	tlsConfig := tls.Config{
-		GetCertificate:           certmanager.GetCertificate,
+		GetCertificate:           certManager.GetCertificate,
 		NextProtos:               []string{"http/1.1"},
 		Rand:                     rand.Reader,
 		PreferServerCipherSuites: true,
@@ -295,7 +299,7 @@ func main() {
 		MaxHeaderBytes: maxHeaderBytes,
 	}
 
-	// Enable TCP keep alives on the TLS connection.
+	// Enable TCP keep alive on the TLS connection.
 	tcpListener, err := net.Listen("tcp", httpAddr)
 	if err != nil {
 		logger.Fatalf("listen failed: %s", err)
@@ -303,13 +307,13 @@ func main() {
 	}
 	tlsListener := tls.NewListener(tcpKeepAliveListener{tcpListener.(*net.TCPListener)}, &tlsConfig)
 
-	hostport := net.JoinHostPort(httpHost, httpPort)
+	hostPort := net.JoinHostPort(httpHost, httpPort)
 	if httpPort == "443" {
-		hostport = httpHost
+		hostPort = httpHost
 	}
 	logger.Infof("Subspace version: %s %s", version, &url.URL{
 		Scheme: "https",
-		Host:   hostport,
+		Host:   hostPort,
 		Path:   "/",
 	})
 	logger.Fatal(httpsd.Serve(tlsListener))
@@ -324,8 +328,8 @@ func (l tcpKeepAliveListener) Accept() (c net.Conn, err error) {
 	if err != nil {
 		return
 	}
-	tc.SetKeepAlive(true)
-	tc.SetKeepAlivePeriod(10 * time.Minute)
+	_ = tc.SetKeepAlive(true)
+	_ = tc.SetKeepAlivePeriod(10 * time.Minute)
 	return tc, nil
 }
 
@@ -372,7 +376,7 @@ func configureSAML() error {
 		Path:   "/",
 	}
 
-	newsp, err := samlsp.New(samlsp.Options{
+	newSP, err := samlsp.New(samlsp.Options{
 		URL:               rootURL,
 		Key:               keyPair.PrivateKey.(*rsa.PrivateKey),
 		Certificate:       keyPair.Leaf,
@@ -388,15 +392,15 @@ func configureSAML() error {
 		samlSP = nil
 		return fmt.Errorf("failed to configure SAML: %s", err)
 	}
-	samlSP = newsp
+	samlSP = newSP
 	logger.Infof("successfully configured SAML")
 	return nil
 }
 
-func BestDomain() string {
-	domain := config.FindInfo().Domain
-	if domain != "" {
-		return domain
-	}
-	return httpHost
-}
+//func BestDomain() string {
+//	domain := config.FindInfo().Domain
+//	if domain != "" {
+//		return domain
+//	}
+//	return httpHost
+//}

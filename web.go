@@ -17,7 +17,7 @@ import (
 	"golang.org/x/net/publicsuffix"
 
 	humanize "github.com/dustin/go-humanize"
-	httprouter "github.com/julienschmidt/httprouter"
+	"github.com/julienschmidt/httprouter"
 )
 
 var (
@@ -269,7 +269,7 @@ func ValidateSession(r *http.Request) (*Session, error) {
 		return nil, fmt.Errorf("auth: missing cookie")
 	}
 	session := &Session{}
-	if err := securetoken.Decode(SessionCookieName, cookie.Value, session); err != nil {
+	if err := secureToken.Decode(SessionCookieName, cookie.Value, session); err != nil {
 		return nil, err
 	}
 	if time.Now().Before(session.NotBefore) {
@@ -309,7 +309,7 @@ func (w *Web) SignoutSession() {
 func (w *Web) SigninSession(admin bool, userID string) error {
 	expires := time.Now().Add(12 * time.Hour)
 
-	encoded, err := securetoken.Encode(SessionCookieName, Session{
+	encoded, err := secureToken.Encode(SessionCookieName, Session{
 		Admin:     admin,
 		UserID:    userID,
 		NotBefore: time.Now(),
