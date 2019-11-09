@@ -1,5 +1,5 @@
 FROM phusion/baseimage:0.11
-LABEL maintainer="github.com/soundscapecloud/soundscape"
+LABEL maintainer="github.com/hludmann"
 
 COPY subspace-linux-amd64 /usr/bin/subspace
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -7,10 +7,12 @@ COPY ./assets/etc/ /
 
 ENV DEBIAN_FRONTEND noninteractive
 
+RUN rm -rf /etc/service/dnsmasq/run \
+           /etc/my_init.d/50-dnsmasq.sh
+
 RUN chmod +x /usr/bin/subspace \
              /usr/local/bin/entrypoint.sh \
-             /etc/service/dnsmasq/run \
-             /etc/service/dnsmasq/log/run \
+             /etc/my_init.d/* \
              /etc/service/subspace/run \
              /etc/service/subspace/log/run
 

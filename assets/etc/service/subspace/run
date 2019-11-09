@@ -1,0 +1,7 @@
+#!/bin/sh
+exec /usr/bin/subspace \
+    "--http-host=${SUBSPACE_HTTP_HOST}" \
+    "--http-addr=${SUBSPACE_HTTP_ADDR}" \
+    "--http-insecure=${SUBSPACE_HTTP_INSECURE}" \
+    "--backlink=${SUBSPACE_BACKLINK}" \
+    "--letsencrypt=${SUBSPACE_LETSENCRYPT}"

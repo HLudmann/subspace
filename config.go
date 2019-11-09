@@ -54,7 +54,7 @@ func (p Profile) WireGuardConfigPath() string {
 }
 
 func (p Profile) WireGuardConfigName() string {
-	return "wg0.conf"
+	return fmt.Sprintf("%s.conf", p.Name)
 }
 
 type Info struct {

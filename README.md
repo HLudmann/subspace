@@ -163,24 +163,27 @@ $ sudo docker logs subspace
 #### Docker-Compose Example
 ```
 version: "3.3"
+
 services:
   subspace:
-   image: subspace/subspace:latest
-   container_name: subspace
-   volumes:
-    - /usr/bin/wg:/usr/bin/wg
-    - /opt/docker/subspace:/data
-   restart: always
-   environment:
-    - SUBSPACE_HTTP_HOST=subspace.example.org
-    - SUBSPACE_LETSENCRYPT=true
-    - SUBSPACE_HTTP_INSECURE=false
-    - SUBSPACE_HTTP_ADDR=":80"
-    - SUBSPACE_NAMESERVER=1.1.1.1
-    - SUBSPACE_LISTEN_PORT=51820
-   cap_add:
-    - NET_ADMIN
-   network_mode: "host"
+    image: subspace/subspace:latest
+    container_name: subspace
+    volumes:
+      - /usr/bin/wg:/usr/bin/wg
+      - /opt/docker/subspace:/data
+    restart: always
+    environment:
+      SUBSPACE_HTTP_HOST: subspace.example.org
+      SUBSPACE_LETSENCRYPT: "true"
+      SUBSPACE_HTTP_INSECURE: "false"
+      SUBSPACE_HTTP_ADDR: ":80"
+      SUBSPACE_NAMESERVER: 1.1.1.1
+      SUBSPACE_IPV4_POOL: "10.99.97.0/24"
+      SUBSPACE_IPV6_POOL: "fd00::10:97:0/64"
+      SUBSPACE_LISTEN_PORT: 51820
+    cap_add:
+      - NET_ADMIN
+    network_mode: "host"
 ```
 
 #### Updating the container image
