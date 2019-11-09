@@ -1,8 +1,6 @@
 FROM phusion/baseimage:0.11
 LABEL maintainer="github.com/hludmann"
 
-COPY subspace-linux-amd64 /usr/bin/subspace
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY ./assets/ /
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -16,7 +14,7 @@ RUN chmod +x /usr/bin/subspace \
              /etc/service/subspace/run \
              /etc/service/subspace/log/run
 
-RUN /sbin/install_clean iproute2 iptables dnsmasq socat
+RUN /sbin/install_clean iproute2 iptables socat
 
 ENTRYPOINT [ "/usr/local/bin/entrypoint.sh" ]
 
