@@ -3,7 +3,7 @@ LABEL maintainer="github.com/soundscapecloud/soundscape"
 
 COPY subspace-linux-amd64 /usr/bin/subspace
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY ./assets/etc/ /
+COPY ./assets/ /
 
 ENV DEBIAN_FRONTEND noninteractive
 
