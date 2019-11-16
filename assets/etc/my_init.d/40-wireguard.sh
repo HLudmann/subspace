@@ -2,8 +2,8 @@
 #
 # WireGuard (${SUBSPACE_IPV4_POOL})
 #
-if ! test -d /data/wireguard ; then
-    mkdir /data/wireguard
+if [ ! -d /data/wireguard ]; then
+    mkdir -p /data/wireguard
     cd /data/wireguard
 
     mkdir clients
